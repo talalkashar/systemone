@@ -1,28 +1,40 @@
 # SystemOne
 
-Guarded computer-use handoff and closed-question wiring. The caller decides.
+Your agent decides. SystemOne checks that decision before a computer-use program can run.
 
-License: MIT. Python 3.11 or newer. Copyright (c) 2026 Talal Kashar.
+License: MIT. Python 3.11 or newer. Copyright (c) 2026 Talal Kashar. See [SECURITY.md](SECURITY.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [LICENSE](LICENSE).
 
-The agent you choose (Claude, Grok, ChatGPT, or any OpenAI-compatible model) is the brain. It picks the target and the action. SystemOne checks that choice. jev is only the computer-use layer. Mock answers from `systemone serve --mock` are fixed wiring, not a model and not a judgment.
+Claude, Grok, ChatGPT, or any OpenAI-compatible model is the brain. It picks the window and the action. SystemOne checks that choice, refuses sensitive surfaces, and can hand the already chosen target and request to an installed `jev-run`. jev does not choose the action. This release never passes `--act`, so it does not click, type, or move the pointer.
+
+Mock answers from `systemone serve --mock` are fixed wiring. They are not a model and not a judgment. This package does not download weights.
+
+## This release
+
+| Piece | What is true |
+| --- | --- |
+| Source | Public and MIT at [github.com/talalkashar/systemone](https://github.com/talalkashar/systemone) |
+| Install | Clone the repo. `pip install systemone` is not a working install yet. |
+| Computer use | Dry run unless you pass `--arm`. `--arm` starts `jev-run` and still omits `--act`. |
+| Closed questions | `systemone serve --mock` returns fixed answers for questions you already shaped. |
+| Writes | `systemone install` prints Claude Code, Cursor, and Codex config and writes nothing unless `--yes`. |
 
 ## Install
 
 ```bash
 git clone https://github.com/talalkashar/systemone.git
 cd systemone
-python -m venv .venv && .venv/bin/pip install -e .
+python3 -m venv .venv
+.venv/bin/pip install -e .
+.venv/bin/systemone use --target Notes --request "count the windows"
 ```
 
-`python3` is the same command if `python` is not on your `PATH`. From a checkout you already have, the venv command is enough.
+On Windows the command is `.venv\Scripts\systemone`. From a checkout you already have, the venv commands are enough.
 
 | Method | Command | Status |
 | --- | --- | --- |
-| GitHub | `git clone https://github.com/talalkashar/systemone.git` | https://github.com/talalkashar/systemone |
-| Local editable install | `python -m venv .venv && .venv/bin/pip install -e .` | use this |
+| GitHub | `git clone https://github.com/talalkashar/systemone.git` | use this |
+| Editable install | `python3 -m venv .venv && .venv/bin/pip install -e .` | use this |
 | PyPI | — | not published yet |
-
-`pip install systemone` is not a working install for this release.
 
 ## Computer use
 
@@ -32,7 +44,7 @@ python -m venv .venv && .venv/bin/pip install -e .
 jev-run --expect TARGET --target TARGET --text REQUEST
 ```
 
-That argument list never includes `--act`. A named target and a request are required. The command refuses the handoff before any process starts when the target or the request names any of these surfaces: banking, mail, messages, password managers, Mason or student records, admin consoles, or login or MFA.
+That argument list never includes `--act`. Starting `jev-run` this way does not click, type, or move the pointer. A named target and a request are required. The command refuses the handoff before any process starts when the target or the request names any of these surfaces: banking, mail, messages, password managers, Mason or student records, admin consoles, or login or MFA.
 
 ```bash
 systemone use --target Notes --request "count the windows"
@@ -49,7 +61,7 @@ systemone use --target Notes --request "count the windows"
 }
 ```
 
-`decision_maker` is `caller`. It is not `jev`, and this command does not call the mock engine. If `jev-run` is missing, `--arm` exits 2 and starts nothing.
+`decision_maker` is `caller`. This command does not call the mock engine, and it does not ask jev what to do. If `jev-run` is missing, `--arm` exits 2 and starts nothing.
 
 ## How this differs from other Jev projects
 
