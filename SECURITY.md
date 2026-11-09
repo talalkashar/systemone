@@ -1,6 +1,6 @@
 # Security
 
-SystemOne checks a computer-use handoff and can serve a local mock for closed questions. It is not a place to put private records. The caller is the decision maker. jev is only the hands layer, and the mock is not a model.
+SystemOne checks a computer-use handoff and can serve a local mock for closed questions. It is not a place to put private records. Any agent that can run a command can be the caller, and that caller is the decision maker. jev is only the hands layer. The mock is not a model, and this package does not call TypeSafe.
 
 ## Computer use
 

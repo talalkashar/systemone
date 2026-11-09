@@ -5,7 +5,7 @@ description: Use when the user asked for a computer-use handoff, or for a closed
 
 # SystemOne
 
-You are the brain. You choose the target and the request. SystemOne checks that choice. jev is only the hands layer. Mock answers are fixed wiring, not a judgment.
+You are the brain. Any agent can be that caller. You choose the target and the request. SystemOne checks that choice. jev is only the hands layer. Mock answers are fixed wiring, not a judgment. This package does not call a model vendor.
 
 ## Computer use
 
