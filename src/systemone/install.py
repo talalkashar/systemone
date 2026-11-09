@@ -53,6 +53,7 @@ def apply_install(home: Path, planned: list[PlannedWrite], *, yes: bool) -> str:
     lines = [f"home: {root}"]
     for item in planned:
         _require_inside(root, item.path)
+        lines.append(f"agent: {_agent_label(root, item.path)}")
         lines.append(f"file: {item.path.relative_to(root)}")
         lines.append(item.content.rstrip("\n"))
     if not yes:
@@ -82,6 +83,17 @@ def _home_dir(home: Path) -> Path:
     if not root.is_dir():
         raise InstallError(f"home is not a directory: {root}")
     return root
+
+
+_AGENT_LABELS = {
+    ".claude.json": "Claude Code",
+    ".cursor/mcp.json": "Cursor",
+    ".codex/config.toml": "Codex",
+}
+
+
+def _agent_label(home: Path, path: Path) -> str:
+    return _AGENT_LABELS.get(path.relative_to(home).as_posix(), path.name)
 
 
 def _config_path(home: Path, agent: str) -> Path:

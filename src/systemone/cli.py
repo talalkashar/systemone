@@ -1,4 +1,7 @@
-"""Command line: `systemone serve`, `systemone decide`, `systemone health`, `systemone install`."""
+"""Command line: serve, decide, health, install, and use.
+
+`use` stays a dry run unless `--arm`. It never passes `--act`.
+"""
 
 import argparse
 import json
@@ -7,6 +10,7 @@ import sys
 from pathlib import Path
 
 from systemone.client import SystemOneClient, SystemOneError
+from systemone.computer_use import UseRefused, perform
 from systemone.engine import MockEngine
 from systemone.install import AGENTS, InstallError, apply_install, plan_install
 from systemone.questions import QUESTION_TYPES, validate_questions, validate_state
@@ -45,6 +49,8 @@ def run(argv: list[str] | None = None) -> int:
         return _health(args)
     if args.command == "install":
         return _install(args)
+    if args.command == "use":
+        return _use(args)
     parser.error(f"unknown command {args.command}")
     return 2
 
@@ -52,7 +58,10 @@ def run(argv: list[str] | None = None) -> int:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="systemone",
-        description="Closed decisions for agents. The big model writes; SystemOne only picks.",
+        description=(
+            "The caller decides. systemone use is a dry run unless --arm, "
+            "and it never passes --act. Mock answers are fixed wiring, not a model."
+        ),
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -108,6 +117,18 @@ def _parser() -> argparse.ArgumentParser:
         "--yes",
         action="store_true",
         help="write the printed files under the current home. Without this, nothing is written.",
+    )
+
+    use = sub.add_parser(
+        "use",
+        help="check a computer-use handoff. Dry run unless --arm. Never passes --act.",
+    )
+    use.add_argument("--target", default="", help="window or control the caller already chose")
+    use.add_argument("--request", default="", help="action the caller already chose")
+    use.add_argument(
+        "--arm",
+        action="store_true",
+        help="start jev-run without --act. Omit this and no process is started.",
     )
     return parser
 
@@ -170,6 +191,18 @@ def _decide(args: argparse.Namespace) -> int:
     )
     sys.stdout.write("\n")
     return 0
+
+
+def _use(args: argparse.Namespace) -> int:
+    """Print the handoff. Start jev-run only when --arm is set, and never with --act."""
+    try:
+        code, body = perform(args.target, args.request, bool(args.arm))
+    except UseRefused as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    json.dump(body, sys.stdout, ensure_ascii=False)
+    sys.stdout.write("\n")
+    return code
 
 
 def _install(args: argparse.Namespace) -> int:

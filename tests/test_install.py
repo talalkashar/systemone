@@ -67,6 +67,8 @@ class InstallCommandTests(unittest.TestCase):
         self.assertIn(".codex/config.toml", result.stdout)
         self.assertEqual(self._seed_bytes(), before)
         self.assertEqual(list(self.home.rglob("*.systemone-tmp")), [])
+        print(result.stdout, end="" if result.stdout.endswith("\n") else "\n")
+        print("install without --yes: Claude Code, Cursor, and Codex config printed; nothing written")
 
     def test_yes_writes_only_inside_the_temp_home(self):
         self._seed_existing()
@@ -102,6 +104,7 @@ class InstallCommandTests(unittest.TestCase):
             self.assertTrue(path.resolve().is_relative_to(self.home.resolve()))
             self.assertFalse(path.is_symlink())
         self.assertEqual(list(self.home.rglob("*.systemone-tmp")), [])
+        print("install --yes: writes stayed inside the temp home")
 
     def test_yes_one_agent_does_not_write_the_others(self):
         result = _run(["install", "--agent", "cursor", "--yes"], env=self._child_env())
@@ -156,6 +159,7 @@ class InstallCommandTests(unittest.TestCase):
             self.assertFalse((self.home / ".cursor" / "mcp.json").exists())
             self.assertFalse((self.home / ".codex" / "config.toml").exists())
             self.assertEqual(list(Path(outside_dir).iterdir()), [outside])
+            print("pre-existing *.systemone-tmp symlink left the outside file unchanged")
 
     def _seed_existing(self):
         (self.home / ".claude.json").write_text(

@@ -1,3 +1,3 @@
-"""Closed decisions for agents. The big model writes; SystemOne only picks."""
+"""Guarded handoff for a chosen agent. The caller decides. Mock answers are wiring."""
 
 __version__ = "0.1.0"
