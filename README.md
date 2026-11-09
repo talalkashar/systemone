@@ -4,9 +4,46 @@ Your agent decides. SystemOne checks that decision before a computer-use program
 
 License: MIT. Python 3.11 or newer. Copyright (c) 2026 Talal Kashar. See [SECURITY.md](SECURITY.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [LICENSE](LICENSE).
 
-Claude, Grok, ChatGPT, or any OpenAI-compatible model is the brain. It picks the window and the action. SystemOne checks that choice, refuses sensitive surfaces, and can hand the already chosen target and request to an installed `jev-run`. jev does not choose the action. This release never passes `--act`, so it does not click, type, or move the pointer.
+Any agent can be the brain. Claude, Grok, ChatGPT, Gemini, DeepSeek, Qwen, GLM, Kimi, Llama, Mistral, a model you run yourself, or any other program that can run a command. There is no model SDK in this package and no OpenAI requirement. The agent picks the window and the action. SystemOne checks that choice, refuses sensitive surfaces, and can hand the already chosen target and request to an installed `jev-run`. jev does not choose the action. This release never passes `--act`, so it does not click, type, or move the pointer.
 
-Mock answers from `systemone serve --mock` are fixed wiring. They are not a model and not a judgment. This package does not download weights.
+Mock answers from `systemone serve --mock` are fixed wiring. They are not a model and not a judgment. This package does not download weights and it does not call TypeSafe.
+
+## What jev is
+
+People use the name for two different things.
+
+Jev, the model, is [TypeSafe](https://docs.typesafe.ai/models)'s System One model (`jev-1.14.0` and `jev-1.13.0` on their models page). It is not a chatbot. You send a state and closed questions. It returns a typed answer and probabilities for each question. It does not write a plan, an email, or code. The question types on that page are Choice, Score, and Noul. Jev 1.14 adds Box.
+
+jev, the program, is Aaron Levin's [typesafe-computer-use](https://github.com/awlevin/typesafe-computer-use). It reads a Mac screen, asks that model which action, item, and site come next, and can click. The classifier is the decision maker there. The writing model only supplies free text.
+
+SystemOne is neither of those. It does not include Aaron Levin's source, and it does not sell access to the Jev model.
+
+## What it costs
+
+This package is MIT and has no runtime dependencies. Installing it creates no TypeSafe bill.
+
+TypeSafe's [models page](https://docs.typesafe.ai/models) lists Jev 1.14 and Jev 1.13 at **$0.042 per million input tokens**. Output tokens are free. That is their list price. A gateway or a prepaid pack can differ. Check the page for the current number.
+
+Aaron Levin's README publishes the computer-use figure: about **$0.0002 a step**. On one screenshot he measured, a jev decision was $0.0002 and 0.13 to 0.38 seconds, against $0.032 and 5.2 seconds for the frontier model on that same screenshot. A 12-step task in that table is about $0.003 on the jev side. Those are his measurements, from [awlevin/typesafe-computer-use](https://github.com/awlevin/typesafe-computer-use). This repository does not re-run them.
+
+## Why that is effective
+
+A step on a screen is usually one choice from a short list of controls. Jev answers that kind of question in one pass and returns probabilities your code can gate on. It does not spend an output-token budget writing a paragraph about the click.
+
+That is the wrong place to decide the goal. Aaron's own write-up says the frontier model read event dates off the pixels, and the classifier needed those facts computed and handed over as state. The large model is the right tool for the goal, the permission, and anything that has to be read and reasoned about. Jev is the right tool for the next control after that decision already exists.
+
+## Why this instead of jev alone
+
+jev alone lets the classifier pick the next action and, when you pass its own `--act`, drive the mouse. Use that when you want the small model to run the desktop.
+
+Use SystemOne when the agent you already trust should keep the decision:
+
+- The caller can be any agent. If it can run `systemone use --target WINDOW --request ACTION`, it can use this. DeepSeek, Qwen, GLM, Kimi, and a model on your own machine are the same shape of caller as Claude or ChatGPT.
+- The check is in code. Banking, mail, messages, password managers, Mason or student records, admin consoles, and login or MFA are refused before a process starts.
+- `--arm` starts `jev-run` with the target and request the agent already chose. The argument list never includes `--act`. The classifier does not get to swap in a different action.
+- MCP is stdio JSON-RPC. Any MCP client can run `systemone-mcp`. The installer prints Claude Code, Cursor, and Codex config because those are the three files it knows. Every other agent adds that same command itself.
+
+This release checks and records the handoff. jev alone is the program that clicks. SystemOne does not click.
 
 ## This release
 
@@ -96,7 +133,7 @@ systemone install --yes
 systemone install --agent cursor --yes
 ```
 
-It sets `mcpServers.systemone` to a stdio server (`command`: `systemone-mcp`) in `~/.claude.json` and `~/.cursor/mcp.json`, and writes `[mcp_servers.systemone]` in `~/.codex/config.toml`. Other servers in those files stay. It refuses a symlink, including a pre-existing `*.systemone-tmp` symlink, and any path outside the home. Read the printout before you pass `--yes`.
+It sets `mcpServers.systemone` to a stdio server (`command`: `systemone-mcp`) in `~/.claude.json` and `~/.cursor/mcp.json`, and writes `[mcp_servers.systemone]` in `~/.codex/config.toml`. Other servers in those files stay. It refuses a symlink, including a pre-existing `*.systemone-tmp` symlink, and any path outside the home. Read the printout before you pass `--yes`. An agent this installer does not know about uses the same `systemone-mcp` command. The protocol is not tied to one vendor.
 
 ## Closed questions
 
