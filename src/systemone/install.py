@@ -54,7 +54,7 @@ def apply_install(home: Path, planned: list[PlannedWrite], *, yes: bool) -> str:
     for item in planned:
         _require_inside(root, item.path)
         lines.append(f"agent: {_agent_label(root, item.path)}")
-        lines.append(f"file: {item.path.relative_to(root)}")
+        lines.append(f"file: {item.path.relative_to(root).as_posix()}")
         lines.append(item.content.rstrip("\n"))
     if not yes:
         lines.append("dry run: no files written. Pass --yes to write them.")
@@ -159,8 +159,9 @@ def _refuse_before_write(path: Path) -> None:
 
 
 def _open_exclusive(path: Path) -> int:
-    """Create a new regular file. O_NOFOLLOW|O_EXCL will not follow a symlink."""
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+    """Create a new regular file. O_EXCL fails on any existing name, a symlink included, and O_NOFOLLOW adds the
+    same where the OS has it (Windows does not)."""
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
     try:
         return os.open(path, flags, 0o600)
     except OSError as exc:

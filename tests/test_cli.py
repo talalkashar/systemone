@@ -152,8 +152,12 @@ class ServeTests(unittest.TestCase):
             except OSError as exc:
                 last = exc
                 time.sleep(0.05)
-        self._stop(server)
-        err = server.stderr.read() if server.stderr is not None else ""
+        server.terminate()
+        try:
+            err = server.communicate(timeout=5)[1]
+        except subprocess.TimeoutExpired:
+            server.kill()
+            err = server.communicate()[1]
         self.fail(f"mock server did not start: last error {last!r}; stderr: {err}")
 
     def _stop(self, server):

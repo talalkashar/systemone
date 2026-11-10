@@ -155,7 +155,7 @@ class InstallCommandTests(unittest.TestCase):
             self.assertIn("refusing to replace", result.stderr)
             self.assertEqual(outside.read_bytes(), before)
             self.assertTrue(link.is_symlink())
-            self.assertEqual(os.readlink(link), str(outside))
+            self.assertEqual(os.readlink(link).removeprefix("\\\\?\\"), str(outside))  # Windows adds \\?\
             self.assertFalse((self.home / ".claude.json").exists())
             self.assertFalse((self.home / ".cursor" / "mcp.json").exists())
             self.assertFalse((self.home / ".codex" / "config.toml").exists())
