@@ -172,5 +172,36 @@ class ServeTests(unittest.TestCase):
             server.stderr.close()
 
 
+class QuestionsFromFlagsTests(unittest.TestCase):
+    def test_order_criteria_score_labels_and_duplicate_name(self):
+        from systemone.cli import questions_from_flags
+
+        questions = questions_from_flags(
+            [
+                ("question", "ship:choice:Should it ship?"),
+                ("criteria", "ci=builds"),
+                ("criteria", "product=defects"),
+                ("question", "risk:score:How risky?"),
+                ("score_label", "low"),
+                ("score_label", "high"),
+            ]
+        )
+        self.assertEqual(list(questions), ["ship", "risk"])
+        self.assertEqual(list(questions["ship"]["criteria"]), ["ci", "product"])
+        self.assertEqual(
+            questions["ship"]["criteria"],
+            {"ci": "builds", "product": "defects"},
+        )
+        self.assertEqual(questions["risk"]["criteria"], ["low", "high"])
+        with self.assertRaises(ValueError) as caught:
+            questions_from_flags(
+                [
+                    ("question", "ok:noul:Is it?"),
+                    ("question", "ok:noul:Again?"),
+                ]
+            )
+        self.assertIn("duplicate", str(caught.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
