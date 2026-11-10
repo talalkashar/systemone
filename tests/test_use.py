@@ -214,3 +214,27 @@ class SurfaceListTests(unittest.TestCase):
                                 ("Calendar", "show next week"), ("System Settings", "turn on dark mode")):
             with self.subTest(target=target):
                 self.assertIsNone(sensitive_surface(target, request))
+
+
+class HandsArgvTests(unittest.TestCase):
+    def test_argv_names_the_target_and_never_passes_act(self):
+        from systemone.computer_use import UsePlan, hands_argv, sensitive_surface
+
+        argv = hands_argv(
+            "/tmp/jev-run",
+            UsePlan(mode="armed", target="Notes", request="count the windows"),
+        )
+        self.assertEqual(
+            argv,
+            [
+                "/tmp/jev-run",
+                "--expect",
+                "Notes",
+                "--target",
+                "Notes",
+                "--text",
+                "count the windows",
+            ],
+        )
+        self.assertNotIn("--act", argv)
+        self.assertIsNone(sensitive_surface("Notes", "count the windows"))
