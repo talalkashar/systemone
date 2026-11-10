@@ -203,5 +203,36 @@ class QuestionsFromFlagsTests(unittest.TestCase):
         self.assertIn("duplicate", str(caught.exception))
 
 
+class ClosedFailureTests(unittest.TestCase):
+    def test_port_outside_range_exits_2(self):
+        for port in ("70000", "-1"):
+            result = _run(["serve", "--mock", "--port", port])
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("port must be between 0 and 65535", result.stderr)
+
+    def test_duplicate_question_exits_2(self):
+        result = _run(
+            [
+                "decide",
+                "--url",
+                "http://127.0.0.1:9",
+                "--question",
+                "ok:noul:Is it?",
+                "--question",
+                "ok:noul:Again?",
+            ]
+        )
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("duplicate question", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_health_when_nothing_is_listening_exits_1(self):
+        port = _free_port()
+        result = _run(["health", "--url", f"http://127.0.0.1:{port}"])
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn(str(port), result.stderr)
+        self.assertEqual(result.stdout, "")
+
+
 if __name__ == "__main__":
     unittest.main()
