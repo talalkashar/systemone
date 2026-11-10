@@ -9,6 +9,7 @@ import os
 import sys
 from pathlib import Path
 
+from systemone import __version__
 from systemone.client import SystemOneClient, SystemOneError
 from systemone.computer_use import UseRefused, perform
 from systemone.engine import MockEngine
@@ -63,9 +64,10 @@ def _parser() -> argparse.ArgumentParser:
             "and it never passes --act. Mock answers are fixed wiring, not a model."
         ),
     )
+    parser.add_argument("--version", action="version", version=f"systemone {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    serve = sub.add_parser("serve", help="listen for POST /decide")
+    serve =sub.add_parser("serve", help="listen for POST /decide")
     serve.add_argument("--port", type=int, default=DEFAULT_PORT)
     serve.add_argument(
         "--mock",

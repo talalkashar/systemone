@@ -45,6 +45,15 @@ def _free_port():
     return port
 
 
+class VersionTests(unittest.TestCase):
+    def test_version_matches_the_package(self):
+        from systemone import __version__
+
+        result = _run(["--version"])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), f"systemone {__version__}")
+
+
 class ServeTests(unittest.TestCase):
     def test_without_mock_exits_2_even_if_model_flag_is_set(self):
         result = _run(["serve"], env=_env(SYSTEMONE_MODEL="1"))
