@@ -1,6 +1,7 @@
 """Local HTTP server for POST /decide and GET /health. Stdlib only."""
 
 import json
+import socketserver
 import sys
 import threading
 import time
@@ -21,6 +22,14 @@ _LOOPBACK = frozenset({"127.0.0.1", "localhost", "::1"})
 class _HTTPServer(ThreadingHTTPServer):
     allow_reuse_address = True
     daemon_threads = True
+
+    def server_bind(self) -> None:
+        # HTTPServer.server_bind also calls socket.getfqdn(), a reverse DNS lookup that can stall startup for many
+        # seconds on some Macs. Nothing here uses that name.
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = str(host)
+        self.server_port = port
 
 
 def ensure_local_bind(host: str, allow_remote: bool) -> None:

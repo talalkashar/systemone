@@ -1,11 +1,13 @@
 """HTTP server on an ephemeral port. Never binds a public interface in tests."""
 
 import json
+import socket
 import sys
 import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
+from unittest import mock
 
 import srcpath  # side effect: put src/ on sys.path
 from systemone.engine import MockEngine
@@ -30,6 +32,13 @@ def _request(method, url, payload=None):
 
 
 class DecisionServerTests(unittest.TestCase):
+    def test_start_does_no_reverse_dns_lookup(self):
+        # getfqdn() can stall startup for many seconds on some Macs (it did on GitHub's macOS runners).
+        with mock.patch.object(socket, "getfqdn", side_effect=AssertionError("getfqdn called")), \
+                DecisionServer(port=0) as server:
+            with urllib.request.urlopen(server.url + "/health", timeout=5) as resp:
+                self.assertEqual(resp.status, 200)
+
     def setUp(self):
         self.server = DecisionServer(MockEngine(), host="127.0.0.1", port=0)
         self.server.start()
