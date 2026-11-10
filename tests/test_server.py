@@ -11,7 +11,7 @@ from unittest import mock
 
 import srcpath  # side effect: put src/ on sys.path
 from systemone.engine import MockEngine
-from systemone.server import DecisionServer, ensure_local_bind
+from systemone.server import DecisionServer, decide_payload, ensure_local_bind
 
 
 def _request(method, url, payload=None):
@@ -109,6 +109,43 @@ class BindGuardTests(unittest.TestCase):
         ensure_local_bind("127.0.0.1", allow_remote=False)
         with self.assertRaises(ValueError):
             DecisionServer(MockEngine(), host="0.0.0.0", port=0, allow_remote=False)
+
+    def test_public_host_is_refused_and_loopback_names_are_allowed(self):
+        with self.assertRaises(ValueError) as caught:
+            ensure_local_bind("8.8.8.8", allow_remote=False)
+        self.assertIn("8.8.8.8", str(caught.exception))
+        ensure_local_bind("8.8.8.8", allow_remote=True)
+        ensure_local_bind("localhost", allow_remote=False)
+        ensure_local_bind("::1", allow_remote=False)
+
+    def test_decide_payload_rejects_a_non_object_and_missing_questions(self):
+        engine = MockEngine()
+        with self.assertRaises(ValueError) as caught:
+            decide_payload(engine, ["nope"])
+        self.assertIn("JSON object", str(caught.exception))
+        with self.assertRaises(ValueError) as caught:
+            decide_payload(engine, {"state": None})
+        self.assertIn("questions is required", str(caught.exception))
+
+
+class DecideBodyTests(unittest.TestCase):
+    def test_non_utf8_body_is_400(self):
+        server = DecisionServer(MockEngine(), host="127.0.0.1", port=0)
+        server.start()
+        self.addCleanup(server.close)
+        request = urllib.request.Request(
+            server.url + "/decide",
+            data=b"\xff",
+            method="POST",
+        )
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            urllib.request.urlopen(request, timeout=2)
+        self.assertEqual(caught.exception.code, 400)
+        try:
+            body = json.loads(caught.exception.read().decode("utf-8"))
+        finally:
+            caught.exception.close()
+        self.assertEqual(body["error"], "request body is not valid UTF-8")
 
 
 if __name__ == "__main__":
