@@ -78,14 +78,23 @@ def main() -> None:
 
 
 def serve_stdio() -> int:
-    for line in sys.stdin:
-        if line.strip() == "":
+    stdin = sys.stdin.buffer
+    while True:
+        line = stdin.readline()
+        if line == b"":
+            break
+        if line.strip() == b"":
             continue
         if len(line) > MAX_LINE_CHARS:
             _write(_error(None, -32700, "Parse error"))
             continue
         try:
-            message = json.loads(line)
+            text = line.decode("utf-8")
+        except UnicodeDecodeError:
+            _write(_error(None, -32700, "Parse error"))
+            continue
+        try:
+            message = json.loads(text)
         except json.JSONDecodeError:
             _write(_error(None, -32700, "Parse error"))
             continue

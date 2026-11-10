@@ -218,6 +218,16 @@ class McpServerTests(unittest.TestCase):
         )
         self.assertEqual(self.mcp.recv()["error"]["code"], -32602)
 
+    def test_non_utf8_line_is_a_parse_error(self):
+        assert self.mcp.proc.stdin is not None
+        self.mcp.proc.stdin.write(b"\xff\n")
+        self.mcp.proc.stdin.flush()
+        parsed = self.mcp.recv()
+        self.assertIsNone(parsed["id"])
+        self.assertEqual(parsed["error"]["code"], -32700)
+        self.mcp.send({"jsonrpc": "2.0", "id": 3, "method": "ping"})
+        self.assertEqual(self.mcp.recv()["result"], {})
+
 
 class McpDownTests(unittest.TestCase):
     def test_health_is_an_error_when_the_server_is_down(self):
