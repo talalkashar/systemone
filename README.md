@@ -71,7 +71,7 @@ On Windows the command is `.venv\Scripts\systemone`. From a checkout you already
 | --- | --- | --- |
 | GitHub | `git clone https://github.com/talalkashar/systemone.git` | use this |
 | Editable install | `python3 -m venv .venv && .venv/bin/pip install -e .` | use this |
-| PyPI | — | not published yet |
+| PyPI | no | not published yet |
 
 ## Computer use
 
