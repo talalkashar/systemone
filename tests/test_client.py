@@ -1,6 +1,7 @@
 """Client maps /decide JSON onto .answers and .model, and surfaces server errors."""
 
 import socket
+import threading
 import unittest
 
 import srcpath  # side effect: put src/ on sys.path
@@ -42,6 +43,40 @@ class SystemOneClientTests(unittest.TestCase):
         with self.assertRaises(SystemOneError) as caught:
             client.health()
         self.assertIn(str(port), str(caught.exception))
+
+
+class ClientEdgeTests(unittest.TestCase):
+    def test_empty_base_url_is_rejected(self):
+        with self.assertRaises(ValueError):
+            SystemOneClient("")
+
+    def test_non_json_success_body_raises(self):
+        listener = socket.socket()
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(1)
+        port = listener.getsockname()[1]
+
+        def serve_once():
+            conn, _ = listener.accept()
+            try:
+                conn.recv(4096)
+                body = b"not-json"
+                conn.sendall(
+                    b"HTTP/1.1 200 OK\r\n"
+                    b"Content-Length: " + str(len(body)).encode("ascii") + b"\r\n"
+                    b"Connection: close\r\n\r\n" + body
+                )
+            finally:
+                conn.close()
+                listener.close()
+
+        thread = threading.Thread(target=serve_once)
+        thread.start()
+        self.addCleanup(thread.join, 2)
+        client = SystemOneClient(f"http://127.0.0.1:{port}", timeout=2)
+        with self.assertRaises(SystemOneError) as caught:
+            client.health()
+        self.assertIn("non-JSON", str(caught.exception))
 
 
 if __name__ == "__main__":
