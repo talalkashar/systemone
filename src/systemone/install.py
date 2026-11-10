@@ -210,7 +210,7 @@ def _upsert_toml(existing: str) -> str:
     lines = existing.splitlines(keepends=True)
     index = 0
     while index < len(lines):
-        header = lines[index].strip()
+        header = _table_token(lines[index])
         if header == _TOML_HEADER or header.startswith("[mcp_servers.systemone."):
             index += 1
             while index < len(lines) and not _next_table(lines[index]):
@@ -224,6 +224,14 @@ def _upsert_toml(existing: str) -> str:
     return text + _TOML_BLOCK
 
 
-def _next_table(line: str) -> bool:
+def _table_token(line: str) -> str:
+    """Table header with a trailing # comment removed. Other lines stay as they are."""
     stripped = line.strip()
+    if stripped.startswith("[") and "#" in stripped:
+        stripped = stripped.split("#", 1)[0].rstrip()
+    return stripped
+
+
+def _next_table(line: str) -> bool:
+    stripped = _table_token(line)
     return stripped.startswith("[") and not stripped.startswith("[mcp_servers.systemone")

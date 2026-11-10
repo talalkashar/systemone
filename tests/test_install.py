@@ -206,6 +206,23 @@ class InstallCommandTests(unittest.TestCase):
             self.assertEqual(list(Path(outside_dir).iterdir()), [outside])
             print("pre-existing *.systemone-tmp symlink left the outside file unchanged")
 
+    def test_codex_header_comment_is_replaced_once(self):
+        codex = self.home / ".codex"
+        codex.mkdir()
+        path = codex / "config.toml"
+        path.write_text(
+            '[mcp_servers.other]\ncommand = "keep"\n\n'
+            '[mcp_servers.systemone] # local\ncommand = "old"\nargs = ["stale"]\n',
+            encoding="utf-8",
+        )
+        result = _run(["install", "--agent", "codex", "--yes"], env=self._child_env())
+        self.assertEqual(result.returncode, 0, result.stderr)
+        text = path.read_text(encoding="utf-8")
+        self.assertEqual(text.count("[mcp_servers.systemone]"), 1)
+        self.assertNotIn("stale", text)
+        self.assertIn('command = "keep"', text)
+        self.assertIn('command = "systemone-mcp"', text)
+
     def _seed_existing(self):
         (self.home / ".claude.json").write_text(
             json.dumps(
