@@ -140,6 +140,15 @@ class InstallCommandTests(unittest.TestCase):
         self.assertEqual(path.read_bytes(), before)
         self.assertFalse((self.home / ".cursor").exists())
 
+    def test_utf8_bom_json_is_updated(self):
+        path = self.home / ".claude.json"
+        path.write_bytes(b'\xef\xbb\xbf{"userID": "kept"}\n')
+        result = _run(["install", "--agent", "claude-code", "--yes"], env=self._child_env())
+        self.assertEqual(result.returncode, 0, result.stderr)
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+        self.assertEqual(data["userID"], "kept")
+        self.assertEqual(data["mcpServers"]["systemone"]["command"], "systemone-mcp")
+
     def test_symlink_outside_the_temp_home_is_refused(self):
         with tempfile.TemporaryDirectory() as outside_dir:
             outside = Path(outside_dir) / "claude.json"
