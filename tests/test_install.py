@@ -45,7 +45,8 @@ class InstallCommandTests(unittest.TestCase):
             self.assertEqual(after, before, f"real home config changed: {path.name}")
 
     def _child_env(self):
-        return _env(HOME=str(self.home))
+        # Path.home() reads USERPROFILE on Windows and HOME elsewhere.
+        return _env(HOME=str(self.home), USERPROFILE=str(self.home))
 
     def _assert_targeted_temp_home(self, stdout: str):
         home_line = stdout.splitlines()[0]

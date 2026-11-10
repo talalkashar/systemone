@@ -48,6 +48,8 @@ class UseCommandTests(unittest.TestCase):
             encoding="utf-8",
         )
         script.chmod(script.stat().st_mode | stat.S_IEXEC)
+        if sys.platform == "win32":  # Windows runs no #! script: which() finds jev-run.cmd through PATHEXT
+            (self.bin_dir / "jev-run.cmd").write_text(f'@"{sys.executable}" "%~dp0jev-run" %*\n', encoding="utf-8")
 
     def _child_env(self, path: Path | None = None):
         return _env(PATH=str(path or self.bin_dir), SYSTEMONE_USE_ARGV=str(self.log))

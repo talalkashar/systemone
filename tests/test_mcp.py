@@ -2,7 +2,7 @@
 
 import json
 import os
-import select
+import queue
 import subprocess
 import sys
 import threading
@@ -36,9 +36,18 @@ class McpProcess:
             stderr=subprocess.PIPE,
             bufsize=0,
         )
-        self._buffer = bytearray()
+        # A reader thread, not select(): select() takes only sockets on Windows, not pipes.
+        self._lines: queue.Queue[bytes | None] = queue.Queue()
+        self._reader = threading.Thread(target=self._read_stdout, daemon=True)
+        self._reader.start()
         self._drain = threading.Thread(target=self._read_stderr, daemon=True)
         self._drain.start()
+
+    def _read_stdout(self):
+        assert self.proc.stdout is not None
+        for line in self.proc.stdout:
+            self._lines.put(line)
+        self._lines.put(None)  # end of output
 
     def _read_stderr(self):
         assert self.proc.stderr is not None
@@ -53,25 +62,17 @@ class McpProcess:
 
     def recv(self, timeout: float = 5):
         deadline = time.monotonic() + timeout
-        assert self.proc.stdout is not None
-        fd = self.proc.stdout.fileno()
-        while time.monotonic() < deadline:
-            while b"\n" in self._buffer:
-                line, _, rest = self._buffer.partition(b"\n")
-                self._buffer = bytearray(rest)
-                if line.strip() == b"":
-                    continue
-                return json.loads(line.decode("utf-8"))
-            remaining = max(0.05, deadline - time.monotonic())
-            ready, _, _ = select.select([fd], [], [], min(0.2, remaining))
-            if not ready:
-                if self.proc.poll() is not None:
-                    break
-                continue
-            chunk = os.read(fd, 65536)
-            if chunk == b"":
+        while (remaining := deadline - time.monotonic()) > 0:
+            try:
+                line = self._lines.get(timeout=remaining)
+            except queue.Empty:
                 break
-            self._buffer.extend(chunk)
+            if line is None:
+                self._lines.put(None)  # stay at end of output for later calls
+                break
+            if line.strip() == b"":
+                continue
+            return json.loads(line.decode("utf-8"))
         raise AssertionError(
             "no JSON-RPC response\nstderr:\n" + "".join(self.stderr_lines)
         )

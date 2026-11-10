@@ -138,19 +138,23 @@ class ServeTests(unittest.TestCase):
         self.assertEqual(result.stdout, "")
 
     def _wait_until_up(self, server, port):
-        deadline = time.monotonic() + 8
+        deadline = time.monotonic() + 20
         url = f"http://127.0.0.1:{port}/health"
+        last = None
         while time.monotonic() < deadline:
             if server.poll() is not None:
                 err = server.stderr.read() if server.stderr is not None else ""
                 self.fail(f"server exited {server.returncode}: {err}")
             try:
-                with urllib.request.urlopen(url, timeout=0.2) as response:
+                with urllib.request.urlopen(url, timeout=1) as response:
                     if response.status == 200:
                         return
-            except OSError:
+            except OSError as exc:
+                last = exc
                 time.sleep(0.05)
-        self.fail("mock server did not start")
+        self._stop(server)
+        err = server.stderr.read() if server.stderr is not None else ""
+        self.fail(f"mock server did not start: last error {last!r}; stderr: {err}")
 
     def _stop(self, server):
         if server.poll() is None:
