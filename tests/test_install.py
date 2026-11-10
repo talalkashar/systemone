@@ -143,6 +143,30 @@ class InstallCommandTests(unittest.TestCase):
             self.assertFalse((self.home / ".codex").exists())
             self.assertFalse((Path(outside_dir) / ".cursor").exists())
 
+    def test_symlink_inside_the_temp_home_is_refused(self):
+        target = self.home / "kept.json"
+        target.write_text('{"keep": true}\n', encoding="utf-8")
+        before = target.read_bytes()
+        link = self.home / ".claude.json"
+        link.symlink_to(target)
+        result = _run(["install", "--agent", "claude-code", "--yes"], env=self._child_env())
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("refusing to replace", result.stderr)
+        self.assertNotIn("outside home", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertEqual(target.read_bytes(), before)
+        self.assertTrue(link.is_symlink())
+        self.assertEqual(link.resolve(), target.resolve())
+        self.assertFalse((self.home / ".cursor").exists())
+
+        link.unlink()
+        link.symlink_to(self.home / "missing")
+        result = _run(["install", "--agent", "claude-code", "--yes"], env=self._child_env())
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertFalse((self.home / "missing").exists())
+        self.assertTrue(link.is_symlink())
+        self.assertFalse((self.home / ".cursor").exists())
+
     def test_yes_does_not_follow_a_temp_symlink_outside_home(self):
         with tempfile.TemporaryDirectory() as outside_dir:
             outside = Path(outside_dir) / "payload"

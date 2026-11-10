@@ -107,6 +107,11 @@ def _config_path(home: Path, agent: str) -> Path:
 
 
 def _require_inside(home: Path, path: Path) -> Path:
+    if path.is_symlink():
+        resolved = path.resolve()
+        if not resolved.is_relative_to(home):
+            raise InstallError(f"refusing to write outside home: {resolved}")
+        raise InstallError(f"refusing to replace {path}")
     resolved = path.resolve()
     if not resolved.is_relative_to(home):
         raise InstallError(f"refusing to write outside home: {resolved}")
