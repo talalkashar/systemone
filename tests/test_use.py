@@ -184,3 +184,31 @@ class UseCommandTests(unittest.TestCase):
         self.assertIn("--arm", result.stdout)
         self.assertIn("--target", result.stdout)
         self.assertNotRegex(result.stdout, r"(?m)^\s*--act\b")
+
+
+class SurfaceListTests(unittest.TestCase):
+    """Names ported from the jev fork's sensitive-surface gate, and ordinary targets that stay allowed."""
+
+    def test_named_apps_sites_and_codes_are_refused(self):
+        from systemone.computer_use import sensitive_surface
+
+        cases = {
+            "banking": ("PayPal", "open Venmo", "Coinbase", "Wallet", "Wells Fargo"),
+            "messages": ("Signal", "WhatsApp", "Telegram"),
+            "password managers": ("Passwords",),
+            "Mason or student records": ("ssbstudent.gmu.edu", "financial aid", "tuition", "degree evaluation"),
+            "admin consoles": ("https://admin.google.com", "console.cloud.google.com", "platform.openai.com"),
+            "login or MFA": ("type the verification code", "Duo Security", "two-factor", "accounts.google.com"),
+        }
+        for name, phrases in cases.items():
+            for phrase in phrases:
+                with self.subTest(phrase=phrase):
+                    self.assertEqual(sensitive_surface("Safari", phrase), name)
+
+    def test_ordinary_targets_are_allowed(self):
+        from systemone.computer_use import sensitive_surface
+
+        for target, request in (("Notes", "count the windows"), ("Finder", "open the Downloads folder"),
+                                ("Calendar", "show next week"), ("System Settings", "turn on dark mode")):
+            with self.subTest(target=target):
+                self.assertIsNone(sensitive_surface(target, request))

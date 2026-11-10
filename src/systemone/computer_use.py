@@ -23,21 +23,47 @@ class UsePlan:
 
 
 _SURFACES: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("banking", re.compile(r"\b(bank|banking|credit\s+card|debit\s+card)\b", re.I)),
+    (
+        "banking",
+        re.compile(
+            r"\b(bank|banking|credit\s+card|debit\s+card|bank\s+of\s+america|chase|wells\s*fargo|capital\s*one|"
+            r"citi\s*bank|navy\s+federal|paypal|venmo|zelle|cash\s+app|wallet|robinhood|coinbase|fidelity|"
+            r"schwab|vanguard)\b",
+            re.I,
+        ),
+    ),
     ("mail", re.compile(r"\b(mail|e-mail|email|gmail|outlook)\b", re.I)),
-    ("messages", re.compile(r"\b(messages|imessage|sms)\b", re.I)),
+    ("messages", re.compile(r"\b(messages|imessage|sms|signal|whatsapp|telegram)\b", re.I)),
     (
         "password managers",
-        re.compile(r"\b(password\s+managers?|1password|bitwarden|lastpass|keychain|dashlane)\b", re.I),
+        re.compile(
+            r"\b(password\s+managers?|passwords|1password|bitwarden|lastpass|keychain|dashlane)\b", re.I
+        ),
     ),
     (
         "Mason or student records",
-        re.compile(r"\b(mason|patriot\s*web|student\s+records?)\b", re.I),
+        re.compile(
+            r"\b(mason|gmu|patriot\s*web|student\s+(records?|accounts?)|ellucian|degree\s+evaluation|"
+            r"financial\s+aid|tuition)\b",
+            re.I,
+        ),
     ),
-    ("admin consoles", re.compile(r"\b(admin(?:istrator)?\s+consoles?)\b", re.I)),
+    (
+        "admin consoles",
+        re.compile(
+            r"\b(admin(?:istrator)?\s+consoles?|admin\.google|console\.cloud\.google|cloud\s+console|"
+            r"supabase\.com/dashboard|dashboard\.render\.com|console\.anthropic|platform\.openai|"
+            r"console\.typesafe)",
+            re.I,
+        ),
+    ),
     (
         "login or MFA",
-        re.compile(r"\b(mfa|2fa|multi-factor|one-time\s+code|log\s*in|login|sign[\s-]?in)\b", re.I),
+        re.compile(
+            r"\b(mfa|2fa|two-factor|multi-factor|one-time\s+code|verification\s+code|duo\s+security|"
+            r"log\s*in|login|sign[\s-]?in|accounts\.google)\b",
+            re.I,
+        ),
     ),
 )
 

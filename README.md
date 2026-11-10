@@ -81,7 +81,7 @@ On Windows the command is `.venv\Scripts\systemone`. From a checkout you already
 jev-run --expect TARGET --target TARGET --text REQUEST
 ```
 
-That argument list never includes `--act`. Starting `jev-run` this way does not click, type, or move the pointer. A named target and a request are required. The command refuses the handoff before any process starts when the target or the request names any of these surfaces: banking, mail, messages, password managers, Mason or student records, admin consoles, or login or MFA.
+That argument list never includes `--act`. Starting `jev-run` this way does not click, type, or move the pointer. A named target and a request are required. The command refuses the handoff before any process starts when the target or the request names any of these surfaces: banking, mail, messages, password managers, Mason or student records, admin consoles, or login or MFA. Each name covers the common apps and sites for it, for example PayPal, Venmo and Coinbase, Signal and WhatsApp, the macOS Passwords app, GMU's student systems, Google and cloud admin consoles, and verification or Duo codes.
 
 ```bash
 systemone use --target Notes --request "count the windows"
