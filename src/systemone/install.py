@@ -123,7 +123,10 @@ def _read(path: Path) -> str | None:
         return None
     if path.is_symlink() or not path.is_file():
         raise InstallError(f"refusing to replace {path}")
-    return path.read_text(encoding="utf-8")
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise InstallError(f"agent config is not valid UTF-8: {path}") from exc
 
 
 def _write(home: Path, item: PlannedWrite) -> None:

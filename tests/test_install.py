@@ -129,6 +129,17 @@ class InstallCommandTests(unittest.TestCase):
         self.assertFalse((self.home / ".cursor").exists())
         self.assertFalse((self.home / ".codex").exists())
 
+    def test_non_utf8_config_exits_2_and_leaves_bytes_unchanged(self):
+        path = self.home / ".claude.json"
+        path.write_bytes(b"\xff\xfe{")
+        before = path.read_bytes()
+        result = _run(["install", "--agent", "claude-code", "--yes"], env=self._child_env())
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("UTF-8", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertFalse((self.home / ".cursor").exists())
+
     def test_symlink_outside_the_temp_home_is_refused(self):
         with tempfile.TemporaryDirectory() as outside_dir:
             outside = Path(outside_dir) / "claude.json"
